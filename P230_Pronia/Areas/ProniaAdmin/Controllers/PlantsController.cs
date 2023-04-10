@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Build.Framework;
 using Microsoft.CodeAnalysis.Differencing;
 using Microsoft.EntityFrameworkCore;
 using P230_Pronia.DAL;
@@ -131,6 +132,7 @@ namespace P230_Pronia.Areas.ProniaAdmin.Controllers
         }
 
 
+
         public IActionResult Edit(int id)
         {
             if (id == 0) return BadRequest();
@@ -197,9 +199,27 @@ namespace P230_Pronia.Areas.ProniaAdmin.Controllers
             plant.SKU = edited.SKU;
             _context.SaveChanges();
             //TODO Edit Category and Tag IDs
-            return Json(plant.PlantImages.Select(p=>p.Path));
+            return RedirectToAction("Index","Plants");
+        }
+        public IActionResult Delete(int id)
+        {
+            if (id <= 0) return NotFound();
+            Plant plant = _context.Plants.FirstOrDefault(p => p.Id == id);
+            if (plant is null) return NotFound();
+            return View(plant);
         }
 
+        [HttpPost]
+        [AutoValidateAntiforgeryToken]
+        public IActionResult Delete(int id,Plant deleted)
+        {
+            if (deleted.Id <= 0) return BadRequest();
+            Plant plant = _context.Plants.FirstOrDefault(p => p.Id == deleted.Id);
+            if(plant is null) return NotFound();
+            _context.Plants.Remove(plant);
+            _context.SaveChanges();
+            return RedirectToAction(nameof(Index));
+        }
         private PlantVM? EditedPlant(int id)
         {
             PlantVM? model = _context.Plants.Include(p => p.PlantCategories)
